@@ -1,6 +1,4 @@
 #![no_std]
-#![feature(linkage)]
-
 #[macro_use]
 pub mod console;
 mod lang_items;
@@ -13,6 +11,10 @@ extern crate bitflags;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 use syscall::*;
+
+unsafe extern "Rust" {
+    fn main() -> i32;
+}
 
 const USER_HEAP_SIZE: usize = 32768;
 
@@ -28,13 +30,9 @@ pub extern "C" fn _start() -> ! {
         HEAP.lock()
             .init(addr_of_mut!(HEAP_SPACE) as usize, USER_HEAP_SIZE);
     }
-    exit(main());
-}
-
-#[linkage = "weak"]
-#[unsafe(no_mangle)]
-fn main() -> i32 {
-    panic!("Cannot find main!");
+    unsafe {
+        exit(main());
+    }
 }
 
 bitflags! {
