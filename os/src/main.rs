@@ -21,7 +21,6 @@
 #![deny(warnings)]
 #![no_std]
 #![no_main]
-#![feature(alloc_error_handler)]
 
 extern crate alloc;
 
