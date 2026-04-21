@@ -22,3 +22,16 @@ easy-fs-fuse/Cargo.lock
 easy-fs-fuse/target/*
 tools/
 pushall.sh
+.vscode/*.log
+
+# Local coding-agent docs and config
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/.aider*
+/.cursor/
+/.windsurf/
+/.roo/
+/.kiro/
+/.cody/
+/.copilot/
