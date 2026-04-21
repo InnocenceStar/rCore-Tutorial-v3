@@ -20,11 +20,8 @@ use crate::task::{
 };
 use crate::timer::set_next_trigger;
 use core::arch::{asm, global_asm};
-use riscv::register::{
-    mtvec::TrapMode,
-    scause::{self, Exception, Interrupt, Trap},
-    sie, stval, stvec,
-};
+use riscv::interrupt::{Exception, Interrupt, Trap};
+use riscv::register::{mtvec::TrapMode, scause, sie, stval, stvec};
 
 global_asm!(include_str!("trap.S"));
 /// initialize CSR `stvec` as the entry of `__alltraps`
@@ -34,13 +31,16 @@ pub fn init() {
 
 fn set_kernel_trap_entry() {
     unsafe {
-        stvec::write(trap_from_kernel as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(
+            trap_from_kernel as usize,
+            TrapMode::Direct,
+        ));
     }
 }
 
 fn set_user_trap_entry() {
     unsafe {
-        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(TRAMPOLINE as usize, TrapMode::Direct));
     }
 }
 /// enable timer interrupt in sie CSR
@@ -56,7 +56,15 @@ pub fn trap_handler() -> ! {
     set_kernel_trap_entry();
     let scause = scause::read();
     let stval = stval::read();
-    match scause.cause() {
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap {:?}, stval = {:#x}!",
+            scause.cause(),
+            stval
+        ),
+    };
+    match trap {
         Trap::Exception(Exception::UserEnvCall) => {
             // jump to next instruction anyway
             let mut cx = current_trap_cx();
@@ -133,8 +141,19 @@ pub fn trap_return() -> ! {
 /// Todo: Chapter 9: I/O device
 pub fn trap_from_kernel() -> ! {
     use riscv::register::sepc;
-    println!("stval = {:#x}, sepc = {:#x}", stval::read(), sepc::read());
-    panic!("a trap {:?} from kernel!", scause::read().cause());
+    let scause = scause::read();
+    let stval = stval::read();
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap from kernel: {:?}, stval = {:#x}, sepc = {:#x}!",
+            scause.cause(),
+            stval,
+            sepc::read()
+        ),
+    };
+    println!("stval = {:#x}, sepc = {:#x}", stval, sepc::read());
+    panic!("a trap {:?} from kernel!", trap);
 }
 
 pub use context::TrapContext;
