@@ -9,11 +9,8 @@ use crate::task::{
 };
 use crate::timer::{check_timer, set_next_trigger};
 use core::arch::{asm, global_asm};
-use riscv::register::{
-    mtvec::TrapMode,
-    scause::{self, Exception, Interrupt, Trap},
-    sie, sscratch, sstatus, stval, stvec,
-};
+use riscv::interrupt::{Exception, Interrupt, Trap};
+use riscv::register::{mtvec::TrapMode, scause, sie, sscratch, sstatus, stval, stvec};
 
 global_asm!(include_str!("trap.S"));
 
@@ -26,16 +23,17 @@ fn set_kernel_trap_entry() {
         unsafe fn __alltraps();
         unsafe fn __alltraps_k();
     }
-    let __alltraps_k_va = __alltraps_k as usize - __alltraps as usize + TRAMPOLINE;
+    let __alltraps_k_va =
+        __alltraps_k as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     unsafe {
-        stvec::write(__alltraps_k_va, TrapMode::Direct);
-        sscratch::write(trap_from_kernel as usize);
+        stvec::write(stvec::Stvec::new(__alltraps_k_va, TrapMode::Direct));
+        sscratch::write(trap_from_kernel as *const () as usize);
     }
 }
 
 fn set_user_trap_entry() {
     unsafe {
-        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(TRAMPOLINE as usize, TrapMode::Direct));
     }
 }
 
@@ -62,8 +60,15 @@ pub fn trap_handler() -> ! {
     set_kernel_trap_entry();
     let scause = scause::read();
     let stval = stval::read();
-    // println!("into {:?}", scause.cause());
-    match scause.cause() {
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap {:?}, stval = {:#x}!",
+            scause.cause(),
+            stval
+        ),
+    };
+    match trap {
         Trap::Exception(Exception::UserEnvCall) => {
             // jump to next instruction anyway
             let mut cx = current_trap_cx();
@@ -133,7 +138,8 @@ pub fn trap_return() -> ! {
         unsafe fn __alltraps();
         unsafe fn __restore();
     }
-    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    let restore_va =
+        __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     //println!("before return");
     unsafe {
         asm!(
@@ -151,7 +157,15 @@ pub fn trap_return() -> ! {
 pub fn trap_from_kernel(_trap_cx: &TrapContext) {
     let scause = scause::read();
     let stval = stval::read();
-    match scause.cause() {
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap from kernel: {:?}, stval = {:#x}!",
+            scause.cause(),
+            stval
+        ),
+    };
+    match trap {
         Trap::Interrupt(Interrupt::SupervisorExternal) => {
             crate::board::irq_handler();
         }
