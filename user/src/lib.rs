@@ -1,6 +1,4 @@
 #![no_std]
-#![feature(linkage)]
-
 #[macro_use]
 pub mod console;
 mod lang_items;
@@ -14,6 +12,10 @@ use alloc::vec::Vec;
 use buddy_system_allocator::LockedHeap;
 use core::ptr::addr_of_mut;
 use syscall::*;
+
+unsafe extern "Rust" {
+    fn main(argc: usize, argv: &[&str]) -> i32;
+}
 
 const USER_HEAP_SIZE: usize = 32768;
 
@@ -43,13 +45,9 @@ pub extern "C" fn _start(argc: usize, argv: usize) -> ! {
             .unwrap(),
         );
     }
-    exit(main(argc, v.as_slice()));
-}
-
-#[linkage = "weak"]
-#[unsafe(no_mangle)]
-fn main(_argc: usize, _argv: &[&str]) -> i32 {
-    panic!("Cannot find main!");
+    unsafe {
+        exit(main(argc, v.as_slice()));
+    }
 }
 
 bitflags! {
