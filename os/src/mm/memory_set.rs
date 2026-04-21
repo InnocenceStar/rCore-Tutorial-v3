@@ -88,7 +88,7 @@ impl MemorySet {
     fn map_trampoline(&mut self) {
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
-            PhysAddr::from(strampoline as usize).into(),
+            PhysAddr::from(strampoline as *const () as usize).into(),
             PTEFlags::R | PTEFlags::X,
         );
     }
@@ -98,18 +98,27 @@ impl MemorySet {
         // map trampoline
         memory_set.map_trampoline();
         // map kernel sections
-        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+        println!(
+            ".text [{:#x}, {:#x})",
+            stext as *const () as usize, etext as *const () as usize
+        );
+        println!(
+            ".rodata [{:#x}, {:#x})",
+            srodata as *const () as usize, erodata as *const () as usize
+        );
+        println!(
+            ".data [{:#x}, {:#x})",
+            sdata as *const () as usize, edata as *const () as usize
+        );
         println!(
             ".bss [{:#x}, {:#x})",
-            sbss_with_stack as usize, ebss as usize
+            sbss_with_stack as *const () as usize, ebss as *const () as usize
         );
         println!("mapping .text section");
         memory_set.push(
             MapArea::new(
-                (stext as usize).into(),
-                (etext as usize).into(),
+                (stext as *const () as usize).into(),
+                (etext as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::X,
             ),
@@ -118,8 +127,8 @@ impl MemorySet {
         println!("mapping .rodata section");
         memory_set.push(
             MapArea::new(
-                (srodata as usize).into(),
-                (erodata as usize).into(),
+                (srodata as *const () as usize).into(),
+                (erodata as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R,
             ),
@@ -128,8 +137,8 @@ impl MemorySet {
         println!("mapping .data section");
         memory_set.push(
             MapArea::new(
-                (sdata as usize).into(),
-                (edata as usize).into(),
+                (sdata as *const () as usize).into(),
+                (edata as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -138,8 +147,8 @@ impl MemorySet {
         println!("mapping .bss section");
         memory_set.push(
             MapArea::new(
-                (sbss_with_stack as usize).into(),
-                (ebss as usize).into(),
+                (sbss_with_stack as *const () as usize).into(),
+                (ebss as *const () as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -148,7 +157,7 @@ impl MemorySet {
         println!("mapping physical memory");
         memory_set.push(
             MapArea::new(
-                (ekernel as usize).into(),
+                (ekernel as *const () as usize).into(),
                 MEMORY_END.into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
@@ -387,9 +396,12 @@ bitflags! {
 ///Check PageTable running correctly
 pub fn remap_test() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();
-    let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
-    let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
-    let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
+    let mid_text: VirtAddr =
+        ((stext as *const () as usize + etext as *const () as usize) / 2).into();
+    let mid_rodata: VirtAddr =
+        ((srodata as *const () as usize + erodata as *const () as usize) / 2).into();
+    let mid_data: VirtAddr =
+        ((sdata as *const () as usize + edata as *const () as usize) / 2).into();
     assert!(
         !kernel_space
             .page_table

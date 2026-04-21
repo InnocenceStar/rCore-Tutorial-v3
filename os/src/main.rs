@@ -59,8 +59,11 @@ fn clear_bss() {
         safe fn ebss();
     }
     unsafe {
-        core::slice::from_raw_parts_mut(sbss as usize as *mut u8, ebss as usize - sbss as usize)
-            .fill(0);
+        core::slice::from_raw_parts_mut(
+            sbss as *const () as usize as *mut u8,
+            ebss as *const () as usize - sbss as *const () as usize,
+        )
+        .fill(0);
     }
 }
 

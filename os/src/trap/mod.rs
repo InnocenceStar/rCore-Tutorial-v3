@@ -32,7 +32,7 @@ pub fn init() {
 fn set_kernel_trap_entry() {
     unsafe {
         stvec::write(stvec::Stvec::new(
-            trap_from_kernel as usize,
+            trap_from_kernel as *const () as usize,
             TrapMode::Direct,
         ));
     }
@@ -123,7 +123,8 @@ pub fn trap_return() -> ! {
         unsafe fn __alltraps();
         unsafe fn __restore();
     }
-    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    let restore_va =
+        __restore as *const () as usize - __alltraps as *const () as usize + TRAMPOLINE;
     unsafe {
         asm!(
             "fence.i",
