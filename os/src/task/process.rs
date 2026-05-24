@@ -119,7 +119,7 @@ impl ProcessControlBlock {
             ustack_top,
             KERNEL_SPACE.exclusive_access().token(),
             kstack_top,
-            trap_handler as usize,
+            linker_symbol_addr!(trap_handler),
         );
         // add main thread to the process
         let mut process_inner = process.inner_exclusive_access();
@@ -177,7 +177,7 @@ impl ProcessControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             task.kstack.get_top(),
-            trap_handler as usize,
+            linker_symbol_addr!(trap_handler),
         );
         trap_cx.x[10] = args.len();
         trap_cx.x[11] = argv_base;
