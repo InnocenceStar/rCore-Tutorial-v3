@@ -47,7 +47,7 @@ pub fn main(argc: usize, argv: &[&str]) -> i32 {
     let start = get_time();
     let mut v = Vec::new();
     for _ in 0..THREAD_COUNT {
-        v.push(thread_create(f as usize, count) as usize);
+        v.push(thread_create(linker_symbol_addr!(f), count) as usize);
     }
     let mut time_cost = Vec::new();
     for tid in v.iter() {

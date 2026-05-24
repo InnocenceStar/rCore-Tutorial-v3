@@ -40,7 +40,10 @@ pub fn main(argc: usize, argv: &[&str]) -> i32 {
     let mut v = Vec::new();
     let size_mb = 1usize;
     for _ in 0..workers {
-        v.push(thread_create(worker as usize, size_kb / workers));
+        v.push(thread_create(
+            linker_symbol_addr!(worker),
+            size_kb / workers,
+        ));
     }
     for tid in v.iter() {
         assert_eq!(0, waittid(*tid as usize));

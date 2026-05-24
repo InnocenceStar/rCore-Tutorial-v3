@@ -65,7 +65,7 @@ pub fn main(argc: usize, argv: &[&str]) -> i32 {
     let start = get_time();
     let mut v = Vec::new();
     for _ in 0..thread_count {
-        v.push(thread_create(f as usize, 0) as usize);
+        v.push(thread_create(linker_symbol_addr!(f), 0) as usize);
     }
     for tid in v.into_iter() {
         waittid(tid);

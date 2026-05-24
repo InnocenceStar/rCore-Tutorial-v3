@@ -67,8 +67,8 @@ pub fn thread_fn(id: usize) -> ! {
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
     let mut v = Vec::new();
-    v.push(thread_create(thread_fn as usize, 0));
-    // v.push(thread_create(thread_fn as usize, 1));
+    v.push(thread_create(linker_symbol_addr!(thread_fn), 0));
+    // v.push(thread_create(linker_symbol_addr!(thread_fn), 1));
     for tid in v.iter() {
         let exit_code = waittid(*tid as usize);
         assert_eq!(exit_code, 0, "thread conflict happened!");
