@@ -14,7 +14,7 @@ fn func() {
 pub fn main() -> i32 {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
 
     println!("signal_simple: sigaction");
     if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {

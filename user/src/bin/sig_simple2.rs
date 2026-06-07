@@ -16,7 +16,7 @@ pub fn main() -> i32 {
     if pid == 0 {
         let mut new = SignalAction::default();
         let mut old = SignalAction::default();
-        new.handler = func as usize;
+        new.handler = linker_symbol_addr!(func);
 
         println!("signal_simple2: child sigaction");
         if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {

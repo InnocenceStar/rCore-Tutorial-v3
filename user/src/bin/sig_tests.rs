@@ -13,7 +13,7 @@ fn func() {
 fn user_sig_test_failsignum() {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
     if sigaction(50, Some(&new), Some(&mut old)) >= 0 {
         panic!("Wrong sigaction but successed!");
     }
@@ -22,7 +22,7 @@ fn user_sig_test_failsignum() {
 fn user_sig_test_kill() {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
 
     if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {
         panic!("Sigaction failed!");
@@ -38,7 +38,7 @@ fn user_sig_test_multiprocsignals() {
     if pid == 0 {
         let mut new = SignalAction::default();
         let mut old = SignalAction::default();
-        new.handler = func as usize;
+        new.handler = linker_symbol_addr!(func);
         if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {
             panic!("Sigaction failed!");
         }
@@ -56,7 +56,7 @@ fn user_sig_test_restore() {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
     let mut old2 = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
 
     if sigaction(SIGUSR1, Some(&new), Some(&mut old)) < 0 {
         panic!("Sigaction failed!");
@@ -97,7 +97,7 @@ fn kernel_sig_test_stop_cont() {
 fn kernel_sig_test_failignorekill() {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
 
     if sigaction(9, Some(&new), Some(&mut old)) >= 0 {
         panic!("Should not set sigaction to kill!");
@@ -115,7 +115,7 @@ fn kernel_sig_test_failignorekill() {
 fn final_sig_test() {
     let mut new = SignalAction::default();
     let mut old = SignalAction::default();
-    new.handler = func as usize;
+    new.handler = linker_symbol_addr!(func);
 
     let mut pipe_fd = [0usize; 2];
     pipe(&mut pipe_fd);
