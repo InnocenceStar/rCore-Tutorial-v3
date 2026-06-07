@@ -16,11 +16,8 @@ mod context;
 
 use crate::syscall::syscall;
 use core::arch::global_asm;
-use riscv::register::{
-    mtvec::TrapMode,
-    scause::{self, Exception, Trap},
-    stval, stvec,
-};
+use riscv::interrupt::{Exception, Interrupt, Trap};
+use riscv::register::{mtvec::TrapMode, scause, stval, stvec};
 
 global_asm!(include_str!("trap.S"));
 
@@ -30,7 +27,7 @@ pub fn init() {
         safe fn __alltraps();
     }
     unsafe {
-        stvec::write(__alltraps as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(__alltraps as usize, TrapMode::Direct));
     }
 }
 
@@ -39,7 +36,15 @@ pub fn init() {
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read(); // get trap cause
     let stval = stval::read(); // get extra value
-    match scause.cause() {
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap {:?}, stval = {:#x}!",
+            scause.cause(),
+            stval
+        ),
+    };
+    match trap {
         Trap::Exception(Exception::UserEnvCall) => {
             cx.sepc += 4;
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
@@ -58,11 +63,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
             //run_next_app();
         }
         _ => {
-            panic!(
-                "Unsupported trap {:?}, stval = {:#x}!",
-                scause.cause(),
-                stval
-            );
+            panic!("Unsupported trap {:?}, stval = {:#x}!", trap, stval);
         }
     }
     cx
