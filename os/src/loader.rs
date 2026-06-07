@@ -58,7 +58,7 @@ pub fn get_num_app() -> usize {
     unsafe extern "C" {
         safe fn _num_app();
     }
-    unsafe { (_num_app as usize as *const usize).read_volatile() }
+    unsafe { (linker_symbol_addr!(_num_app) as *const usize).read_volatile() }
 }
 
 /// Load nth user app at
@@ -67,7 +67,7 @@ pub fn load_apps() {
     unsafe extern "C" {
         safe fn _num_app();
     }
-    let num_app_ptr = _num_app as usize as *const usize;
+    let num_app_ptr = linker_symbol_addr!(_num_app) as *const usize;
     let num_app = get_num_app();
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     // load apps
