@@ -28,7 +28,7 @@ impl TaskContext {
             unsafe fn __restore();
         }
         Self {
-            ra: __restore as usize,
+            ra: linker_symbol_addr!(__restore),
             sp: kstack_ptr,
             s: [0; 12],
         }

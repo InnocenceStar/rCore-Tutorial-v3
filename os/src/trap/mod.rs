@@ -27,7 +27,10 @@ pub fn init() {
         safe fn __alltraps();
     }
     unsafe {
-        stvec::write(stvec::Stvec::new(__alltraps as usize, TrapMode::Direct));
+        stvec::write(stvec::Stvec::new(
+            linker_symbol_addr!(__alltraps),
+            TrapMode::Direct,
+        ));
     }
 }
 
