@@ -108,7 +108,7 @@ lazy_static! {
             unsafe extern "C" {
                 safe fn _num_app();
             }
-            let num_app_ptr = _num_app as usize as *const usize;
+            let num_app_ptr = linker_symbol_addr!(_num_app) as *const usize;
             let num_app = num_app_ptr.read_volatile();
             let mut app_start: [usize; MAX_APP_NUM + 1] = [0; MAX_APP_NUM + 1];
             let app_start_raw: &[usize] =

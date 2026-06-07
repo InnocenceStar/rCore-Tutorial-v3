@@ -1,5 +1,11 @@
 #![no_std]
 
+macro_rules! linker_symbol_addr {
+    ($symbol:path) => {
+        ($symbol as *const ()).addr()
+    };
+}
+
 #[macro_use]
 pub mod console;
 mod lang_items;
@@ -24,7 +30,7 @@ fn clear_bss() {
         safe fn start_bss();
         safe fn end_bss();
     }
-    (start_bss as usize..end_bss as usize).for_each(|addr| unsafe {
+    (linker_symbol_addr!(start_bss)..linker_symbol_addr!(end_bss)).for_each(|addr| unsafe {
         (addr as *mut u8).write_volatile(0);
     });
 }
