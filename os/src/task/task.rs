@@ -54,7 +54,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             kernel_stack_top,
-            trap_handler as usize,
+            linker_symbol_addr!(trap_handler),
         );
         task_control_block
     }

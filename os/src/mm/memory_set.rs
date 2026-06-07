@@ -71,7 +71,7 @@ impl MemorySet {
     fn map_trampoline(&mut self) {
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
-            PhysAddr::from(strampoline as usize).into(),
+            PhysAddr::from(linker_symbol_addr!(strampoline)).into(),
             PTEFlags::R | PTEFlags::X,
         );
     }
@@ -81,18 +81,31 @@ impl MemorySet {
         // map trampoline
         memory_set.map_trampoline();
         // map kernel sections
-        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+        println!(
+            ".text [{:#x}, {:#x})",
+            linker_symbol_addr!(stext),
+            linker_symbol_addr!(etext)
+        );
+        println!(
+            ".rodata [{:#x}, {:#x})",
+            linker_symbol_addr!(srodata),
+            linker_symbol_addr!(erodata)
+        );
+        println!(
+            ".data [{:#x}, {:#x})",
+            linker_symbol_addr!(sdata),
+            linker_symbol_addr!(edata)
+        );
         println!(
             ".bss [{:#x}, {:#x})",
-            sbss_with_stack as usize, ebss as usize
+            linker_symbol_addr!(sbss_with_stack),
+            linker_symbol_addr!(ebss)
         );
         println!("mapping .text section");
         memory_set.push(
             MapArea::new(
-                (stext as usize).into(),
-                (etext as usize).into(),
+                (linker_symbol_addr!(stext)).into(),
+                (linker_symbol_addr!(etext)).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::X,
             ),
@@ -101,8 +114,8 @@ impl MemorySet {
         println!("mapping .rodata section");
         memory_set.push(
             MapArea::new(
-                (srodata as usize).into(),
-                (erodata as usize).into(),
+                (linker_symbol_addr!(srodata)).into(),
+                (linker_symbol_addr!(erodata)).into(),
                 MapType::Identical,
                 MapPermission::R,
             ),
@@ -111,8 +124,8 @@ impl MemorySet {
         println!("mapping .data section");
         memory_set.push(
             MapArea::new(
-                (sdata as usize).into(),
-                (edata as usize).into(),
+                (linker_symbol_addr!(sdata)).into(),
+                (linker_symbol_addr!(edata)).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -121,8 +134,8 @@ impl MemorySet {
         println!("mapping .bss section");
         memory_set.push(
             MapArea::new(
-                (sbss_with_stack as usize).into(),
-                (ebss as usize).into(),
+                (linker_symbol_addr!(sbss_with_stack)).into(),
+                (linker_symbol_addr!(ebss)).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
             ),
@@ -131,7 +144,7 @@ impl MemorySet {
         println!("mapping physical memory");
         memory_set.push(
             MapArea::new(
-                (ekernel as usize).into(),
+                (linker_symbol_addr!(ekernel)).into(),
                 MEMORY_END.into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
@@ -383,9 +396,10 @@ bitflags! {
 #[allow(unused)]
 pub fn remap_test() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();
-    let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
-    let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
-    let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
+    let mid_text: VirtAddr = ((linker_symbol_addr!(stext) + linker_symbol_addr!(etext)) / 2).into();
+    let mid_rodata: VirtAddr =
+        ((linker_symbol_addr!(srodata) + linker_symbol_addr!(erodata)) / 2).into();
+    let mid_data: VirtAddr = ((linker_symbol_addr!(sdata) + linker_symbol_addr!(edata)) / 2).into();
     assert!(
         !kernel_space
             .page_table
