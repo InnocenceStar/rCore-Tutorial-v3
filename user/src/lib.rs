@@ -1,23 +1,22 @@
 #![no_std]
-#![feature(linkage)]
 
 #[macro_use]
 pub mod console;
 mod lang_items;
 mod syscall;
 
+unsafe extern "Rust" {
+    fn main() -> i32;
+}
+
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text.entry")]
 pub extern "C" fn _start() -> ! {
     clear_bss();
-    exit(main());
+    unsafe {
+        exit(main());
+    }
     panic!("unreachable after sys_exit!");
-}
-
-#[linkage = "weak"]
-#[unsafe(no_mangle)]
-fn main() -> i32 {
-    panic!("Cannot find main!");
 }
 
 fn clear_bss() {
