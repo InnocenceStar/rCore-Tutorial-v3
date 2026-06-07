@@ -20,11 +20,8 @@ use crate::task::{
 };
 use crate::timer::set_next_trigger;
 use core::arch::{asm, global_asm};
-use riscv::register::{
-    mtvec::TrapMode,
-    scause::{self, Exception, Interrupt, Trap},
-    sie, stval, stvec,
-};
+use riscv::interrupt::{Exception, Interrupt, Trap};
+use riscv::register::{mtvec::TrapMode, scause, sie, stval, stvec};
 
 global_asm!(include_str!("trap.S"));
 
@@ -35,13 +32,16 @@ pub fn init() {
 
 fn set_kernel_trap_entry() {
     unsafe {
-        stvec::write(trap_from_kernel as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(
+            trap_from_kernel as usize,
+            TrapMode::Direct,
+        ));
     }
 }
 
 fn set_user_trap_entry() {
     unsafe {
-        stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
+        stvec::write(stvec::Stvec::new(TRAMPOLINE, TrapMode::Direct));
     }
 }
 
@@ -59,7 +59,15 @@ pub fn trap_handler() -> ! {
     let cx = current_trap_cx();
     let scause = scause::read();
     let stval = stval::read();
-    match scause.cause() {
+    let trap: Trap<Interrupt, Exception> = match scause.cause().try_into() {
+        Ok(trap) => trap,
+        Err(_) => panic!(
+            "Unsupported trap {:?}, stval = {:#x}!",
+            scause.cause(),
+            stval
+        ),
+    };
+    match trap {
         Trap::Exception(Exception::UserEnvCall) => {
             cx.sepc += 4;
             cx.x[10] = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
@@ -83,11 +91,7 @@ pub fn trap_handler() -> ! {
             suspend_current_and_run_next();
         }
         _ => {
-            panic!(
-                "Unsupported trap {:?}, stval = {:#x}!",
-                scause.cause(),
-                stval
-            );
+            panic!("Unsupported trap {:?}, stval = {:#x}!", trap, stval);
         }
     }
     trap_return();
