@@ -119,7 +119,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             kernel_stack_top,
-            trap_handler as *const () as usize,
+            linker_symbol_addr!(trap_handler),
         );
         task_control_block
     }
@@ -167,7 +167,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             self.kernel_stack.get_top(),
-            trap_handler as *const () as usize,
+            linker_symbol_addr!(trap_handler),
         );
         trap_cx.x[10] = args.len();
         trap_cx.x[11] = argv_base;
