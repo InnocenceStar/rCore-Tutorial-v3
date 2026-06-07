@@ -31,7 +31,7 @@ pub fn main() -> i32 {
     ];
     for arg in args.iter() {
         v.push(thread_create(
-            thread_print as usize,
+            linker_symbol_addr!(thread_print),
             arg as *const _ as usize,
         ));
     }

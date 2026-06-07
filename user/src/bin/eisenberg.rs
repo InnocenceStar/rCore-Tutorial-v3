@@ -125,7 +125,7 @@ pub fn main() -> i32 {
     assert_eq!(THREAD_NUM, 10);
     let shuffle: [usize; 10] = [0, 7, 4, 6, 2, 9, 8, 1, 3, 5];
     for i in 0..THREAD_NUM {
-        v.push(thread_create(thread_fn as usize, shuffle[i]));
+        v.push(thread_create(linker_symbol_addr!(thread_fn), shuffle[i]));
     }
     for tid in v.iter() {
         let exit_code = waittid(*tid as usize);

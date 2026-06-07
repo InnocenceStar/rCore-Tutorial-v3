@@ -33,8 +33,8 @@ pub fn main() -> i32 {
     assert_eq!(semaphore_create(0) as usize, SEM_SYNC);
     // create threads
     let threads = vec![
-        thread_create(first as usize, 0),
-        thread_create(second as usize, 0),
+        thread_create(linker_symbol_addr!(first), 0),
+        thread_create(linker_symbol_addr!(second), 0),
     ];
     // wait for all threads to complete
     for thread in threads.iter() {

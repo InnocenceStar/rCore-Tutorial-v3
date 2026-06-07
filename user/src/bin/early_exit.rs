@@ -16,7 +16,7 @@ pub fn thread_a() -> ! {
 
 #[unsafe(no_mangle)]
 pub fn main() -> i32 {
-    thread_create(thread_a as usize, 0);
+    thread_create(linker_symbol_addr!(thread_a), 0);
     println!("main thread exited.");
     exit(0)
 }

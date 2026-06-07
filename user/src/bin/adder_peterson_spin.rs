@@ -89,7 +89,7 @@ pub fn main(argc: usize, argv: &[&str]) -> i32 {
         "Peterson works when there are only 2 threads."
     );
     for id in 0..thread_count {
-        v.push(thread_create(f as usize, id) as usize);
+        v.push(thread_create(linker_symbol_addr!(f), id) as usize);
     }
     let mut time_cost = Vec::new();
     for tid in v.iter() {

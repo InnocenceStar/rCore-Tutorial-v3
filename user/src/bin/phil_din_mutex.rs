@@ -71,7 +71,7 @@ pub fn main() -> i32 {
     for i in 0..N {
         assert_eq!(mutex_blocking_create(), i as isize);
         v.push(thread_create(
-            philosopher_dining_problem as usize,
+            linker_symbol_addr!(philosopher_dining_problem),
             &ids.as_slice()[i] as *const _ as usize,
         ));
     }

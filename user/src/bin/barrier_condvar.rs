@@ -73,7 +73,7 @@ fn thread_fn() {
 pub fn main() -> i32 {
     let mut v: Vec<isize> = Vec::new();
     for _ in 0..THREAD_NUM {
-        v.push(thread_create(thread_fn as usize, 0));
+        v.push(thread_create(linker_symbol_addr!(thread_fn), 0));
     }
     for tid in v.into_iter() {
         waittid(tid as usize);
