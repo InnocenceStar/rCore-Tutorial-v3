@@ -101,7 +101,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             kernel_stack_top,
-            trap_handler as *const () as usize,
+            linker_symbol_addr!(trap_handler),
         );
         task_control_block
     }
@@ -125,7 +125,7 @@ impl TaskControlBlock {
             user_sp,
             KERNEL_SPACE.exclusive_access().token(),
             self.kernel_stack.get_top(),
-            trap_handler as *const () as usize,
+            linker_symbol_addr!(trap_handler),
         );
         *inner.get_trap_cx() = trap_cx;
         // **** release current PCB

@@ -24,6 +24,12 @@
 #![no_std]
 #![no_main]
 
+macro_rules! linker_symbol_addr {
+    ($symbol:path) => {
+        ($symbol as *const ()).addr()
+    };
+}
+
 extern crate alloc;
 
 #[macro_use]
@@ -60,8 +66,8 @@ fn clear_bss() {
     }
     unsafe {
         core::slice::from_raw_parts_mut(
-            sbss as *const () as usize as *mut u8,
-            ebss as *const () as usize - sbss as *const () as usize,
+            linker_symbol_addr!(sbss) as *mut u8,
+            linker_symbol_addr!(ebss) - linker_symbol_addr!(sbss),
         )
         .fill(0);
     }
