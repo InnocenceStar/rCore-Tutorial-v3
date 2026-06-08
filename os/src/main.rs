@@ -12,6 +12,12 @@
 #![no_std]
 #![no_main]
 
+macro_rules! linker_symbol_addr {
+    ($symbol:path) => {
+        ($symbol as *const ()).addr()
+    };
+}
+
 use core::arch::global_asm;
 use log::*;
 
@@ -29,7 +35,8 @@ pub fn clear_bss() {
         safe fn sbss();
         safe fn ebss();
     }
-    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
+    (linker_symbol_addr!(sbss)..linker_symbol_addr!(ebss))
+        .for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
 /// the rust entry-point of os
@@ -52,21 +59,29 @@ pub fn rust_main() -> ! {
     println!("[kernel] Hello, world!");
     trace!(
         "[kernel] .text [{:#x}, {:#x})",
-        stext as usize, etext as usize
+        linker_symbol_addr!(stext),
+        linker_symbol_addr!(etext)
     );
     debug!(
         "[kernel] .rodata [{:#x}, {:#x})",
-        srodata as usize, erodata as usize
+        linker_symbol_addr!(srodata),
+        linker_symbol_addr!(erodata)
     );
     info!(
         "[kernel] .data [{:#x}, {:#x})",
-        sdata as usize, edata as usize
+        linker_symbol_addr!(sdata),
+        linker_symbol_addr!(edata)
     );
     warn!(
         "[kernel] boot_stack top=bottom={:#x}, lower_bound={:#x}",
-        boot_stack_top as usize, boot_stack_lower_bound as usize
+        linker_symbol_addr!(boot_stack_top),
+        linker_symbol_addr!(boot_stack_lower_bound)
     );
-    error!("[kernel] .bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+    error!(
+        "[kernel] .bss [{:#x}, {:#x})",
+        linker_symbol_addr!(sbss),
+        linker_symbol_addr!(ebss)
+    );
 
     // CI autotest success: sbi::shutdown(false)
     // CI autotest failed : sbi::shutdown(true)
