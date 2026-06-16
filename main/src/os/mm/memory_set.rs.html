@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/mm/memory_set.rs`."><title>memory_set.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-6c3ea77c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="os" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0-nightly (ce36a966c 2025-02-17)" data-channel="nightly" data-search-js="search-f7327375.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-3a5871a4.js"></script><script defer src="../../../static.files/src-script-b8d3f215.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5332ae0c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">os/mm/</div>memory_set.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use super</span>::{FrameTracker, frame_alloc};
-<a href=#2 id=2 data-nosnippet>2</a><span class="kw">use super</span>::{PTEFlags, PageTable, PageTableEntry};
-<a href=#3 id=3 data-nosnippet>3</a><span class="kw">use super</span>::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
-<a href=#4 id=4 data-nosnippet>4</a><span class="kw">use super</span>::{StepByOne, VPNRange};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/mm/memory_set.rs`."><title>memory_set.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="os" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">os/mm/</div>memory_set.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>super::{FrameTracker, frame_alloc};
+<a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>super::{PTEFlags, PageTable, PageTableEntry};
+<a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>super::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
+<a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>super::{StepByOne, VPNRange};
 <a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span><span class="kw">crate</span>::config::{MEMORY_END, MMIO, PAGE_SIZE, TRAMPOLINE};
 <a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span><span class="kw">crate</span>::sync::UPIntrFreeCell;
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>alloc::collections::BTreeMap;
@@ -12,16 +12,16 @@
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span>riscv::register::satp;
 <a href=#13 id=13 data-nosnippet>13</a>
 <a href=#14 id=14 data-nosnippet>14</a><span class="kw">unsafe extern </span><span class="string">"C" </span>{
-<a href=#15 id=15 data-nosnippet>15</a>    safe <span class="kw">fn </span>stext();
-<a href=#16 id=16 data-nosnippet>16</a>    safe <span class="kw">fn </span>etext();
-<a href=#17 id=17 data-nosnippet>17</a>    safe <span class="kw">fn </span>srodata();
-<a href=#18 id=18 data-nosnippet>18</a>    safe <span class="kw">fn </span>erodata();
-<a href=#19 id=19 data-nosnippet>19</a>    safe <span class="kw">fn </span>sdata();
-<a href=#20 id=20 data-nosnippet>20</a>    safe <span class="kw">fn </span>edata();
-<a href=#21 id=21 data-nosnippet>21</a>    safe <span class="kw">fn </span>sbss_with_stack();
-<a href=#22 id=22 data-nosnippet>22</a>    safe <span class="kw">fn </span>ebss();
-<a href=#23 id=23 data-nosnippet>23</a>    safe <span class="kw">fn </span>ekernel();
-<a href=#24 id=24 data-nosnippet>24</a>    safe <span class="kw">fn </span>strampoline();
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="kw">safe fn </span>stext();
+<a href=#16 id=16 data-nosnippet>16</a>    <span class="kw">safe fn </span>etext();
+<a href=#17 id=17 data-nosnippet>17</a>    <span class="kw">safe fn </span>srodata();
+<a href=#18 id=18 data-nosnippet>18</a>    <span class="kw">safe fn </span>erodata();
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="kw">safe fn </span>sdata();
+<a href=#20 id=20 data-nosnippet>20</a>    <span class="kw">safe fn </span>edata();
+<a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">safe fn </span>sbss_with_stack();
+<a href=#22 id=22 data-nosnippet>22</a>    <span class="kw">safe fn </span>ebss();
+<a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">safe fn </span>ekernel();
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">safe fn </span>strampoline();
 <a href=#25 id=25 data-nosnippet>25</a>}
 <a href=#26 id=26 data-nosnippet>26</a>
 <a href=#27 id=27 data-nosnippet>27</a><span class="macro">lazy_static!</span> {
@@ -85,7 +85,7 @@
 <a href=#85 id=85 data-nosnippet>85</a>    </span><span class="kw">fn </span>map_trampoline(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 <a href=#86 id=86 data-nosnippet>86</a>        <span class="self">self</span>.page_table.map(
 <a href=#87 id=87 data-nosnippet>87</a>            VirtAddr::from(TRAMPOLINE).into(),
-<a href=#88 id=88 data-nosnippet>88</a>            PhysAddr::from(strampoline <span class="kw">as </span>usize).into(),
+<a href=#88 id=88 data-nosnippet>88</a>            PhysAddr::from(<span class="macro">linker_symbol_addr!</span>(strampoline)).into(),
 <a href=#89 id=89 data-nosnippet>89</a>            PTEFlags::R | PTEFlags::X,
 <a href=#90 id=90 data-nosnippet>90</a>        );
 <a href=#91 id=91 data-nosnippet>91</a>    }
@@ -105,8 +105,8 @@
 <a href=#105 id=105 data-nosnippet>105</a>        // println!("mapping .text section");
 <a href=#106 id=106 data-nosnippet>106</a>        </span>memory_set.push(
 <a href=#107 id=107 data-nosnippet>107</a>            MapArea::new(
-<a href=#108 id=108 data-nosnippet>108</a>                (stext <span class="kw">as </span>usize).into(),
-<a href=#109 id=109 data-nosnippet>109</a>                (etext <span class="kw">as </span>usize).into(),
+<a href=#108 id=108 data-nosnippet>108</a>                <span class="macro">linker_symbol_addr!</span>(stext).into(),
+<a href=#109 id=109 data-nosnippet>109</a>                <span class="macro">linker_symbol_addr!</span>(etext).into(),
 <a href=#110 id=110 data-nosnippet>110</a>                MapType::Identical,
 <a href=#111 id=111 data-nosnippet>111</a>                MapPermission::R | MapPermission::X,
 <a href=#112 id=112 data-nosnippet>112</a>            ),
@@ -115,8 +115,8 @@
 <a href=#115 id=115 data-nosnippet>115</a>        <span class="comment">// println!("mapping .rodata section");
 <a href=#116 id=116 data-nosnippet>116</a>        </span>memory_set.push(
 <a href=#117 id=117 data-nosnippet>117</a>            MapArea::new(
-<a href=#118 id=118 data-nosnippet>118</a>                (srodata <span class="kw">as </span>usize).into(),
-<a href=#119 id=119 data-nosnippet>119</a>                (erodata <span class="kw">as </span>usize).into(),
+<a href=#118 id=118 data-nosnippet>118</a>                <span class="macro">linker_symbol_addr!</span>(srodata).into(),
+<a href=#119 id=119 data-nosnippet>119</a>                <span class="macro">linker_symbol_addr!</span>(erodata).into(),
 <a href=#120 id=120 data-nosnippet>120</a>                MapType::Identical,
 <a href=#121 id=121 data-nosnippet>121</a>                MapPermission::R,
 <a href=#122 id=122 data-nosnippet>122</a>            ),
@@ -125,8 +125,8 @@
 <a href=#125 id=125 data-nosnippet>125</a>        <span class="comment">// println!("mapping .data section");
 <a href=#126 id=126 data-nosnippet>126</a>        </span>memory_set.push(
 <a href=#127 id=127 data-nosnippet>127</a>            MapArea::new(
-<a href=#128 id=128 data-nosnippet>128</a>                (sdata <span class="kw">as </span>usize).into(),
-<a href=#129 id=129 data-nosnippet>129</a>                (edata <span class="kw">as </span>usize).into(),
+<a href=#128 id=128 data-nosnippet>128</a>                <span class="macro">linker_symbol_addr!</span>(sdata).into(),
+<a href=#129 id=129 data-nosnippet>129</a>                <span class="macro">linker_symbol_addr!</span>(edata).into(),
 <a href=#130 id=130 data-nosnippet>130</a>                MapType::Identical,
 <a href=#131 id=131 data-nosnippet>131</a>                MapPermission::R | MapPermission::W,
 <a href=#132 id=132 data-nosnippet>132</a>            ),
@@ -135,8 +135,8 @@
 <a href=#135 id=135 data-nosnippet>135</a>        <span class="comment">// println!("mapping .bss section");
 <a href=#136 id=136 data-nosnippet>136</a>        </span>memory_set.push(
 <a href=#137 id=137 data-nosnippet>137</a>            MapArea::new(
-<a href=#138 id=138 data-nosnippet>138</a>                (sbss_with_stack <span class="kw">as </span>usize).into(),
-<a href=#139 id=139 data-nosnippet>139</a>                (ebss <span class="kw">as </span>usize).into(),
+<a href=#138 id=138 data-nosnippet>138</a>                <span class="macro">linker_symbol_addr!</span>(sbss_with_stack).into(),
+<a href=#139 id=139 data-nosnippet>139</a>                <span class="macro">linker_symbol_addr!</span>(ebss).into(),
 <a href=#140 id=140 data-nosnippet>140</a>                MapType::Identical,
 <a href=#141 id=141 data-nosnippet>141</a>                MapPermission::R | MapPermission::W,
 <a href=#142 id=142 data-nosnippet>142</a>            ),
@@ -145,7 +145,7 @@
 <a href=#145 id=145 data-nosnippet>145</a>        <span class="comment">// println!("mapping physical memory");
 <a href=#146 id=146 data-nosnippet>146</a>        </span>memory_set.push(
 <a href=#147 id=147 data-nosnippet>147</a>            MapArea::new(
-<a href=#148 id=148 data-nosnippet>148</a>                (ekernel <span class="kw">as </span>usize).into(),
+<a href=#148 id=148 data-nosnippet>148</a>                <span class="macro">linker_symbol_addr!</span>(ekernel).into(),
 <a href=#149 id=149 data-nosnippet>149</a>                MEMORY_END.into(),
 <a href=#150 id=150 data-nosnippet>150</a>                MapType::Identical,
 <a href=#151 id=151 data-nosnippet>151</a>                MapPermission::R | MapPermission::W,
@@ -234,7 +234,7 @@
 <a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">pub fn </span>activate(<span class="kw-2">&amp;</span><span class="self">self</span>) {
 <a href=#235 id=235 data-nosnippet>235</a>        <span class="kw">let </span>satp = <span class="self">self</span>.page_table.token();
 <a href=#236 id=236 data-nosnippet>236</a>        <span class="kw">unsafe </span>{
-<a href=#237 id=237 data-nosnippet>237</a>            satp::write(satp);
+<a href=#237 id=237 data-nosnippet>237</a>            satp::write(satp::Satp::from_bits(satp));
 <a href=#238 id=238 data-nosnippet>238</a>            <span class="macro">asm!</span>(<span class="string">"sfence.vma"</span>);
 <a href=#239 id=239 data-nosnippet>239</a>        }
 <a href=#240 id=240 data-nosnippet>240</a>    }
@@ -358,29 +358,31 @@
 <a href=#358 id=358 data-nosnippet>358</a><span class="attr">#[allow(unused)]
 <a href=#359 id=359 data-nosnippet>359</a></span><span class="kw">pub fn </span>remap_test() {
 <a href=#360 id=360 data-nosnippet>360</a>    <span class="kw">let </span><span class="kw-2">mut </span>kernel_space = KERNEL_SPACE.exclusive_access();
-<a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">let </span>mid_text: VirtAddr = ((stext <span class="kw">as </span>usize + etext <span class="kw">as </span>usize) / <span class="number">2</span>).into();
-<a href=#362 id=362 data-nosnippet>362</a>    <span class="kw">let </span>mid_rodata: VirtAddr = ((srodata <span class="kw">as </span>usize + erodata <span class="kw">as </span>usize) / <span class="number">2</span>).into();
-<a href=#363 id=363 data-nosnippet>363</a>    <span class="kw">let </span>mid_data: VirtAddr = ((sdata <span class="kw">as </span>usize + edata <span class="kw">as </span>usize) / <span class="number">2</span>).into();
-<a href=#364 id=364 data-nosnippet>364</a>    <span class="macro">assert!</span>(
-<a href=#365 id=365 data-nosnippet>365</a>        !kernel_space
-<a href=#366 id=366 data-nosnippet>366</a>            .page_table
-<a href=#367 id=367 data-nosnippet>367</a>            .translate(mid_text.floor())
-<a href=#368 id=368 data-nosnippet>368</a>            .unwrap()
-<a href=#369 id=369 data-nosnippet>369</a>            .writable(),
-<a href=#370 id=370 data-nosnippet>370</a>    );
-<a href=#371 id=371 data-nosnippet>371</a>    <span class="macro">assert!</span>(
-<a href=#372 id=372 data-nosnippet>372</a>        !kernel_space
-<a href=#373 id=373 data-nosnippet>373</a>            .page_table
-<a href=#374 id=374 data-nosnippet>374</a>            .translate(mid_rodata.floor())
-<a href=#375 id=375 data-nosnippet>375</a>            .unwrap()
-<a href=#376 id=376 data-nosnippet>376</a>            .writable(),
-<a href=#377 id=377 data-nosnippet>377</a>    );
-<a href=#378 id=378 data-nosnippet>378</a>    <span class="macro">assert!</span>(
-<a href=#379 id=379 data-nosnippet>379</a>        !kernel_space
-<a href=#380 id=380 data-nosnippet>380</a>            .page_table
-<a href=#381 id=381 data-nosnippet>381</a>            .translate(mid_data.floor())
-<a href=#382 id=382 data-nosnippet>382</a>            .unwrap()
-<a href=#383 id=383 data-nosnippet>383</a>            .executable(),
-<a href=#384 id=384 data-nosnippet>384</a>    );
-<a href=#385 id=385 data-nosnippet>385</a>    <span class="macro">println!</span>(<span class="string">"remap_test passed!"</span>);
-<a href=#386 id=386 data-nosnippet>386</a>}</code></pre></div></section></main></body></html>
+<a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">let </span>mid_text: VirtAddr = ((<span class="macro">linker_symbol_addr!</span>(stext) + <span class="macro">linker_symbol_addr!</span>(etext)) / <span class="number">2</span>).into();
+<a href=#362 id=362 data-nosnippet>362</a>    <span class="kw">let </span>mid_rodata: VirtAddr =
+<a href=#363 id=363 data-nosnippet>363</a>        ((<span class="macro">linker_symbol_addr!</span>(srodata) + <span class="macro">linker_symbol_addr!</span>(erodata)) / <span class="number">2</span>).into();
+<a href=#364 id=364 data-nosnippet>364</a>    <span class="kw">let </span>mid_data: VirtAddr = ((<span class="macro">linker_symbol_addr!</span>(sdata) + <span class="macro">linker_symbol_addr!</span>(edata)) / <span class="number">2</span>).into();
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="macro">assert!</span>(
+<a href=#366 id=366 data-nosnippet>366</a>        !kernel_space
+<a href=#367 id=367 data-nosnippet>367</a>            .page_table
+<a href=#368 id=368 data-nosnippet>368</a>            .translate(mid_text.floor())
+<a href=#369 id=369 data-nosnippet>369</a>            .unwrap()
+<a href=#370 id=370 data-nosnippet>370</a>            .writable(),
+<a href=#371 id=371 data-nosnippet>371</a>    );
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="macro">assert!</span>(
+<a href=#373 id=373 data-nosnippet>373</a>        !kernel_space
+<a href=#374 id=374 data-nosnippet>374</a>            .page_table
+<a href=#375 id=375 data-nosnippet>375</a>            .translate(mid_rodata.floor())
+<a href=#376 id=376 data-nosnippet>376</a>            .unwrap()
+<a href=#377 id=377 data-nosnippet>377</a>            .writable(),
+<a href=#378 id=378 data-nosnippet>378</a>    );
+<a href=#379 id=379 data-nosnippet>379</a>    <span class="macro">assert!</span>(
+<a href=#380 id=380 data-nosnippet>380</a>        !kernel_space
+<a href=#381 id=381 data-nosnippet>381</a>            .page_table
+<a href=#382 id=382 data-nosnippet>382</a>            .translate(mid_data.floor())
+<a href=#383 id=383 data-nosnippet>383</a>            .unwrap()
+<a href=#384 id=384 data-nosnippet>384</a>            .executable(),
+<a href=#385 id=385 data-nosnippet>385</a>    );
+<a href=#386 id=386 data-nosnippet>386</a>    <span class="macro">println!</span>(<span class="string">"remap_test passed!"</span>);
+<a href=#387 id=387 data-nosnippet>387</a>}
+</code></pre></div></section></main></body></html>
