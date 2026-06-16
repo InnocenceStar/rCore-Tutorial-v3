@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["clear_bss","rust_main"],"macro":["print","println"],"mod":["batch","console","lang_items","logging","sbi","sync","syscall","trap"]};
+window.SIDEBAR_ITEMS = {"fn":["clear_bss","rust_main"],"macro":["linker_symbol_addr","print","println"],"mod":["batch","console","lang_items","logging","sbi","sync","syscall","trap"]};
