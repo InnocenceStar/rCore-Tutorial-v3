@@ -1,6 +1,6 @@
 //!Implementation of [`TaskControlBlock`]
 use super::TaskContext;
-use super::{KernelStack, PidHandle, pid_alloc};
+use super::{KernelStack, pid_alloc};
 use crate::config::TRAP_CONTEXT;
 use crate::mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr};
 use crate::sync::UPSafeCell;
@@ -11,7 +11,7 @@ use core::cell::RefMut;
 
 pub struct TaskControlBlock {
     // immutable
-    pub pid: PidHandle,
+    pub pid: usize,
     pub kernel_stack: KernelStack,
     // mutable
     inner: UPSafeCell<TaskControlBlockInner>,
@@ -61,12 +61,12 @@ impl TaskControlBlock {
             .unwrap()
             .ppn();
         // alloc a pid and a kernel stack in kernel space
-        let pid_handle = pid_alloc();
-        let kernel_stack = KernelStack::new(&pid_handle);
+        let pid = pid_alloc();
+        let kernel_stack = KernelStack::new();
         let kernel_stack_top = kernel_stack.get_top();
         // push a task context which goes to trap_return to the top of kernel stack
         let task_control_block = Self {
-            pid: pid_handle,
+            pid,
             kernel_stack,
             inner: unsafe {
                 UPSafeCell::new(TaskControlBlockInner {
@@ -129,11 +129,11 @@ impl TaskControlBlock {
             .unwrap()
             .ppn();
         // alloc a pid and a kernel stack in kernel space
-        let pid_handle = pid_alloc();
-        let kernel_stack = KernelStack::new(&pid_handle);
+        let pid = pid_alloc();
+        let kernel_stack = KernelStack::new();
         let kernel_stack_top = kernel_stack.get_top();
         let task_control_block = Arc::new(TaskControlBlock {
-            pid: pid_handle,
+            pid,
             kernel_stack,
             inner: unsafe {
                 UPSafeCell::new(TaskControlBlockInner {
@@ -160,7 +160,7 @@ impl TaskControlBlock {
         // **** release children PCB automatically
     }
     pub fn getpid(&self) -> usize {
-        self.pid.0
+        self.pid
     }
 }
 
