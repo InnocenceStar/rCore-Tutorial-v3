@@ -24,6 +24,7 @@ mod task;
 
 use crate::loader::get_app_data_by_name;
 use crate::sbi::shutdown;
+use alloc::string::String;
 use alloc::sync::Arc;
 use lazy_static::*;
 pub use manager::{TaskManager, fetch_task};
@@ -112,7 +113,8 @@ pub fn exit_current_and_run_next(exit_code: i32) {
 lazy_static! {
     ///Globle process that init user shell
     pub static ref INITPROC: Arc<TaskControlBlock> = Arc::new(TaskControlBlock::new(
-        get_app_data_by_name("initproc").unwrap()
+        get_app_data_by_name("initproc").unwrap(),
+        String::from("initproc")
     ));
 }
 ///Add init process to the manager

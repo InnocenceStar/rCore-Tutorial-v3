@@ -5,9 +5,12 @@ use crate::config::TRAP_CONTEXT;
 use crate::mm::{KERNEL_SPACE, MemorySet, PhysPageNum, VirtAddr};
 use crate::sync::UPSafeCell;
 use crate::trap::{TrapContext, trap_handler};
+use alloc::string::String;
 use alloc::sync::{Arc, Weak};
 use alloc::vec::Vec;
 use core::cell::RefMut;
+
+const TASK_COMM_LEN: usize = 16;
 
 pub struct TaskControlBlock {
     // immutable
@@ -27,6 +30,7 @@ pub struct TaskControlBlockInner {
     pub parent: Option<Weak<TaskControlBlock>>,
     pub children: Vec<Arc<TaskControlBlock>>,
     pub exit_code: i32,
+    pub comm: String,
 }
 
 impl TaskControlBlockInner {
@@ -53,7 +57,7 @@ impl TaskControlBlock {
     pub fn inner_exclusive_access(&self) -> RefMut<'_, TaskControlBlockInner> {
         self.inner.exclusive_access()
     }
-    pub fn new(elf_data: &[u8]) -> Self {
+    pub fn new(elf_data: &[u8], comm: String) -> Self {
         // memory_set with elf program headers/trampoline/trap context/user stack
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
         let trap_cx_ppn = memory_set
@@ -78,6 +82,7 @@ impl TaskControlBlock {
                     parent: None,
                     children: Vec::new(),
                     exit_code: 0,
+                    comm: Self::normalize_comm(comm),
                 })
             },
         };
@@ -93,6 +98,10 @@ impl TaskControlBlock {
         task_control_block
     }
     pub fn exec(&self, elf_data: &[u8]) {
+        self.exec_with_comm(elf_data, None);
+    }
+
+    pub fn exec_with_comm(&self, elf_data: &[u8], comm: Option<String>) {
         // memory_set with elf program headers/trampoline/trap context/user stack
         let (memory_set, user_sp, entry_point) = MemorySet::from_elf(elf_data);
         let trap_cx_ppn = memory_set
@@ -108,6 +117,9 @@ impl TaskControlBlock {
         inner.trap_cx_ppn = trap_cx_ppn;
         // initialize base_size
         inner.base_size = user_sp;
+        if let Some(comm) = comm {
+            inner.comm = Self::normalize_comm(comm);
+        }
         // initialize trap_cx
         let trap_cx = inner.get_trap_cx();
         *trap_cx = TrapContext::app_init_context(
@@ -145,6 +157,7 @@ impl TaskControlBlock {
                     parent: Some(Arc::downgrade(self)),
                     children: Vec::new(),
                     exit_code: 0,
+                    comm: parent_inner.comm.clone(),
                 })
             },
         });
@@ -161,6 +174,13 @@ impl TaskControlBlock {
     }
     pub fn getpid(&self) -> usize {
         self.pid
+    }
+
+    fn normalize_comm(mut comm: String) -> String {
+        while comm.len() >= TASK_COMM_LEN {
+            comm.pop();
+        }
+        comm
     }
 }
 
