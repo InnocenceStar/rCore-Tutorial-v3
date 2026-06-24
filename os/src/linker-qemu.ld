@@ -47,6 +47,17 @@ SECTIONS
     ebss = .;
     ekernel = .;
 
+    TRACE_BASE = 0x86d00000;
+    TRACE_SIZE = 0x1000000;
+    . = TRACE_BASE;
+    strace = .;
+    .trace (NOLOAD) : {
+        KEEP(*(.trace .trace.*))
+        . = ALIGN(4K);
+    }
+    etrace = .;
+    ASSERT(etrace - strace <= TRACE_SIZE, "trace section exceeds reserved RAM area")
+
     /DISCARD/ : {
         *(.eh_frame)
     }

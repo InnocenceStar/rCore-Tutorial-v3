@@ -3,6 +3,7 @@ use super::__switch;
 use super::{TaskContext, TaskControlBlock};
 use super::{TaskStatus, fetch_task};
 use crate::sync::UPSafeCell;
+use crate::trace;
 use crate::trap::TrapContext;
 use alloc::sync::Arc;
 use lazy_static::*;
@@ -51,6 +52,7 @@ pub fn run_tasks() {
             let next_task_cx_ptr = &task_inner.task_cx as *const TaskContext;
             task_inner.task_status = TaskStatus::Running;
             drop(task_inner);
+            trace::record_sched_switch_to(&task);
             // release coming task TCB manually
             processor.current = Some(task);
             // release processor manually

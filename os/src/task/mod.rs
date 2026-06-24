@@ -24,12 +24,13 @@ mod task;
 
 use crate::loader::get_app_data_by_name;
 use crate::sbi::shutdown;
+use crate::trace::{self, TraceOffCpuState};
 use alloc::string::String;
 use alloc::sync::Arc;
 use lazy_static::*;
 pub use manager::{TaskManager, fetch_task};
 use switch::__switch;
-use task::{TaskControlBlock, TaskStatus};
+use task::TaskStatus;
 
 pub use context::TaskContext;
 pub use manager::add_task;
@@ -38,6 +39,7 @@ pub use processor::{
     Processor, current_task, current_trap_cx, current_user_token, run_tasks, schedule,
     take_current_task,
 };
+pub(crate) use task::TaskControlBlock;
 /// Suspend the current 'Running' task and run the next task in task list.
 pub fn suspend_current_and_run_next() {
     // There must be an application running.
@@ -50,6 +52,7 @@ pub fn suspend_current_and_run_next() {
     task_inner.task_status = TaskStatus::Ready;
     drop(task_inner);
     // ---- release current PCB
+    trace::set_pending_switch(&task, TraceOffCpuState::Running);
 
     // push back to ready queue.
     add_task(task);
@@ -86,6 +89,9 @@ pub fn exit_current_and_run_next(exit_code: i32) {
     inner.task_status = TaskStatus::Zombie;
     // Record exit code
     inner.exit_code = exit_code;
+    drop(inner);
+    trace::set_pending_switch(&task, TraceOffCpuState::Dead);
+    let mut inner = task.inner_exclusive_access();
     // do not move to its parent but under initproc
 
     // ++++++ access initproc TCB exclusively

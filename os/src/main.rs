@@ -50,6 +50,7 @@ pub mod sync;
 pub mod syscall;
 pub mod task;
 mod timer;
+mod trace;
 pub mod trap;
 
 use core::arch::global_asm;
@@ -79,6 +80,7 @@ pub fn rust_main() -> ! {
     info!("[kernel] Hello, world!");
     mm::init();
     mm::remap_test();
+    trace::init();
     task::add_initproc();
     println!("after initproc!");
     trap::init();

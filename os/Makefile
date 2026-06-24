@@ -17,6 +17,16 @@ endif
 
 # KERNEL ENTRY
 KERNEL_ENTRY_PA := 0x80200000
+QEMU_MEMORY_SIZE := 128M
+QEMU_RAM_BASE_PA := 0x80000000
+TRACE_BASE_PA := 0x86d00000
+TRACE_RAM_IMG ?= target/$(TARGET)/$(MODE)/qemu-ram.img
+TRACE_BYTRACE ?= target/$(TARGET)/$(MODE)/trace.bytrace
+OSTRACE_GIT := https://github.com/rcore-os/ostrace.git
+OSTRACE_REV := 9550ec9418dcfc1bfef1efa19bfae6d53649173b
+OSTRACE_TOOL_ROOT := target/host-tools/ostrace
+TRACE2BYTRACE := $(OSTRACE_TOOL_ROOT)/bin/trace2bytrace
+HOST_TARGET := $(shell rustc -vV | sed -n 's/^host: //p')
 
 # Binutils
 OBJDUMP := rust-objdump --arch-name=riscv64
@@ -59,7 +69,8 @@ disasm-vim: kernel
 
 run: run-inner
 
-QEMU_ARGS := -machine virt \
+QEMU_ARGS := -object memory-backend-file,id=trace-ram,size=$(QEMU_MEMORY_SIZE),mem-path=$(TRACE_RAM_IMG),share=on \
+			 -machine virt,memory-backend=trace-ram \
 			 -nographic \
 			 -bios $(BOOTLOADER) \
 			 -device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)
@@ -69,18 +80,34 @@ qemu-version-check:
 	@sh scripts/qemu-ver-check.sh $(QEMU_NAME)
 
 run-inner: qemu-version-check build
+	@mkdir -p $(dir $(TRACE_RAM_IMG))
+	@rm -f $(TRACE_RAM_IMG) $(TRACE_BYTRACE)
 	@qemu-system-riscv64 $(QEMU_ARGS)
+	@$(MAKE) trace-bytrace
 
 debug: qemu-version-check build
+	@mkdir -p $(dir $(TRACE_RAM_IMG))
+	@rm -f $(TRACE_RAM_IMG)
 	@tmux new-session -d \
 		"qemu-system-riscv64 $(QEMU_ARGS) -s -S" && \
 		tmux split-window -h "riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
 		tmux -2 attach-session -d
 
 gdbserver: qemu-version-check build
+	@mkdir -p $(dir $(TRACE_RAM_IMG))
+	@rm -f $(TRACE_RAM_IMG)
 	@qemu-system-riscv64 $(QEMU_ARGS) -s -S
 
 gdbclient:
 	@riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
 
-.PHONY: build env kernel clean disasm disasm-vim run-inner gdbserver gdbclient qemu-version-check
+trace-bytrace:
+	@cargo install --git $(OSTRACE_GIT) --rev $(OSTRACE_REV) --target $(HOST_TARGET) --features std --bin trace2bytrace --root $(OSTRACE_TOOL_ROOT)
+	@$(TRACE2BYTRACE) \
+		--ram $(TRACE_RAM_IMG) \
+		--out $(TRACE_BYTRACE) \
+		--ram-base $(QEMU_RAM_BASE_PA) \
+		--trace-base $(TRACE_BASE_PA)
+	@echo Trace bytrace: $(TRACE_BYTRACE)
+
+.PHONY: build env kernel clean disasm disasm-vim run-inner gdbserver gdbclient qemu-version-check trace-bytrace

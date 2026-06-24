@@ -175,6 +175,10 @@ impl TaskControlBlock {
     pub fn getpid(&self) -> usize {
         self.pid
     }
+    pub fn trace_identity(&self) -> (usize, String) {
+        let inner = self.inner_exclusive_access();
+        (self.pid, inner.comm.clone())
+    }
 
     fn normalize_comm(mut comm: String) -> String {
         while comm.len() >= TASK_COMM_LEN {
