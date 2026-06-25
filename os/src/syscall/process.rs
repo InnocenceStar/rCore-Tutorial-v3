@@ -5,6 +5,7 @@ use crate::task::{
     suspend_current_and_run_next,
 };
 use crate::timer::get_time_ms;
+use crate::trace;
 use alloc::sync::Arc;
 
 pub fn sys_exit(exit_code: i32) -> ! {
@@ -86,4 +87,12 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
         -2
     }
     // ---- release current PCB lock automatically
+}
+
+pub fn sys_trace_control(command: usize) -> isize {
+    match command {
+        0 => trace::start_session(),
+        1 => trace::stop_session(),
+        _ => -2,
+    }
 }

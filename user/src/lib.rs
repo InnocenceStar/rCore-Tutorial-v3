@@ -84,3 +84,9 @@ pub fn sleep(period_ms: usize) {
         sys_yield();
     }
 }
+pub fn trace_start() -> isize {
+    sys_trace_control(0)
+}
+pub fn trace_stop() -> isize {
+    sys_trace_control(1)
+}

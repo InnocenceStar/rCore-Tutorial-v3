@@ -82,10 +82,15 @@ lazy_static! {
 #[unsafe(link_section = ".trace.image")]
 static mut TRACE_IMAGE_BYTES: [u8; TRACE_IMAGE_SIZE] = [0; TRACE_IMAGE_SIZE];
 static mut TRACE_IMAGE: Option<TraceImage<'static, KernelTracePlatform>> = None;
+static mut TRACE_SESSION_STARTED: bool = false;
+static mut TRACE_SESSION_FINISHED: bool = false;
 
 /// Starts the single kernel trace image session.
-pub fn init() {
+pub fn start_session() -> isize {
     unsafe {
+        if TRACE_SESSION_STARTED || TRACE_SESSION_FINISHED {
+            return -1;
+        }
         let image = TraceImage::init(TraceImageConfig {
             bytes: &mut TRACE_IMAGE_BYTES,
             cpu_count: MAX_CPUS,
@@ -95,16 +100,30 @@ pub fn init() {
         })
         .expect("failed to initialize trace image");
         TRACE_IMAGE = Some(image);
+        TRACE_SESSION_STARTED = true;
+        0
     }
 }
 
 /// Finishes the active trace image session.
-pub fn finish() {
+pub fn stop_session() -> isize {
     unsafe {
-        if let Some(image) = TRACE_IMAGE.as_mut() {
-            image.finish();
-        }
+        let Some(image) = TRACE_IMAGE.as_mut() else {
+            return -1;
+        };
+        image.finish();
         TRACE_IMAGE = None;
+        TRACE_SESSION_FINISHED = true;
+        0
+    }
+}
+
+/// Finishes the trace image session if it is active.
+pub fn finish_if_active() {
+    unsafe {
+        if TRACE_IMAGE.is_some() {
+            let _ = stop_session();
+        }
     }
 }
 

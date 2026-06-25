@@ -80,7 +80,6 @@ pub fn rust_main() -> ! {
     info!("[kernel] Hello, world!");
     mm::init();
     mm::remap_test();
-    trace::init();
     task::add_initproc();
     println!("after initproc!");
     trap::init();

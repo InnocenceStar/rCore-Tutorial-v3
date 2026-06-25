@@ -9,6 +9,7 @@ extern crate user_lib;
 
 // item of TESTS : app_name(argv_0), argv_1, argv_2, argv_3, exit_code
 static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
+    ("trace_start\0", "\0", "\0", "\0", 0),
     ("exit\0", "\0", "\0", "\0", 0),
     ("fantastic_text\0", "\0", "\0", "\0", 0),
     ("forktest_simple\0", "\0", "\0", "\0", 0),
@@ -20,6 +21,7 @@ static SUCC_TESTS: &[(&str, &str, &str, &str, i32)] = &[
     ("sleep_simple\0", "\0", "\0", "\0", 0),
     ("sleep\0", "\0", "\0", "\0", 0),
     ("yield\0", "\0", "\0", "\0", 0),
+    ("trace_stop\0", "\0", "\0", "\0", 0),
 ];
 
 static FAIL_TESTS: &[(&str, &str, &str, &str, i32)] = &[("stack_overflow\0", "\0", "\0", "\0", -2)];

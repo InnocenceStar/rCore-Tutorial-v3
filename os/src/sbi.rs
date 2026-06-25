@@ -21,7 +21,7 @@ pub fn set_timer(timer: usize) {
 /// use sbi call to shutdown the kernel
 pub fn shutdown(failure: bool) -> ! {
     use sbi_rt::{NoReason, Shutdown, SystemFailure, system_reset};
-    crate::trace::finish();
+    crate::trace::finish_if_active();
     if !failure {
         system_reset(Shutdown, NoReason);
     } else {
