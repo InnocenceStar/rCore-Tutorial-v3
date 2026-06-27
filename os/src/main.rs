@@ -20,6 +20,7 @@ mod board;
 #[macro_use]
 mod console;
 mod config;
+mod device_tree;
 mod drivers;
 mod fs;
 mod lang_items;
@@ -52,9 +53,10 @@ fn clear_bss() {
 
 /// the rust entry-point of os
 #[unsafe(no_mangle)]
-pub fn rust_main() -> ! {
+pub fn rust_main(_hart_id: usize, dtb_pa: usize) -> ! {
     clear_bss();
     logging::init();
+    device_tree::init(dtb_pa);
     info!("[kernel] Hello, world!");
     mm::init();
     mm::remap_test();
