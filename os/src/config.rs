@@ -15,4 +15,4 @@ pub fn kernel_stack_position(app_id: usize) -> (usize, usize) {
     (bottom, top)
 }
 
-pub use crate::board::{CLOCK_FREQ, MEMORY_END, MMIO};
+pub use crate::board::{MEMORY_END, MMIO};
