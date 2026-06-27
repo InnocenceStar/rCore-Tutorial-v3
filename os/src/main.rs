@@ -22,6 +22,7 @@ mod board;
 #[macro_use]
 mod console;
 mod config;
+mod device_tree;
 mod drivers;
 mod fs;
 mod lang_items;
@@ -63,11 +64,12 @@ lazy_static! {
 }
 
 #[unsafe(no_mangle)]
-pub fn rust_main() -> ! {
+pub fn rust_main(_hart_id: usize, dtb_pa: usize) -> ! {
     clear_bss();
-    logging::init();
     mm::init();
     UART.init();
+    logging::init();
+    device_tree::init(dtb_pa);
     info!("KERN: init gpu");
     let _gpu = GPU_DEVICE.clone();
     info!("KERN: init keyboard");
