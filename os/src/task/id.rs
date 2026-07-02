@@ -15,8 +15,11 @@ pub struct RecycleAllocator {
 
 impl RecycleAllocator {
     pub fn new() -> Self {
+        Self::new_start(0)
+    }
+    pub fn new_start(current: usize) -> Self {
         RecycleAllocator {
-            current: 0,
+            current,
             recycled: Vec::new(),
         }
     }
@@ -41,12 +44,12 @@ impl RecycleAllocator {
 
 lazy_static! {
     static ref PID_ALLOCATOR: UPIntrFreeCell<RecycleAllocator> =
-        unsafe { UPIntrFreeCell::new(RecycleAllocator::new()) };
+        unsafe { UPIntrFreeCell::new(RecycleAllocator::new_start(1)) };
     static ref KSTACK_ALLOCATOR: UPIntrFreeCell<RecycleAllocator> =
         unsafe { UPIntrFreeCell::new(RecycleAllocator::new()) };
 }
 
-pub const IDLE_PID: usize = 0;
+pub const IDLE_PID: usize = 1;
 
 pub struct PidHandle(pub usize);
 
