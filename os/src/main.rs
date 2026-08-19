@@ -44,6 +44,7 @@ global_asm!(include_str!("link_app.S"));
 /// clear BSS segment
 fn clear_bss() {
     unsafe extern "C" {
+        // 声明函数, 链接时会从符号表中查找这个两个符号, 分别代表bss的开始地址和结束地址
         safe fn sbss();
         safe fn ebss();
     }
