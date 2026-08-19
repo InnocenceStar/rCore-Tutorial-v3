@@ -7,6 +7,9 @@ fn main() {
     insert_app_data().unwrap();
 }
 
+/// Cargo 规定：如果你的 crate 根目录下存在一个 build.rs 文件，那么 Cargo 在执行 rustc 编译你的 crate 之前，会先把 build.rs 当作一个独立的可执行程序编译并运行一次。
+/// 
+
 static TARGET_PATH: &str = "../user/target/riscv64gc-unknown-none-elf/release/";
 
 fn insert_app_data() -> Result<()> {
