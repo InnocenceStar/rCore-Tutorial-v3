@@ -146,6 +146,7 @@ pub fn print_app_info() {
 pub fn run_next_app() -> ! {
     let mut app_manager = APP_MANAGER.exclusive_access();
     let current_app = app_manager.get_current_app();
+    // 搬运数据
     app_manager.load_app(current_app);
     app_manager.move_to_next_app();
     drop(app_manager);
@@ -154,6 +155,7 @@ pub fn run_next_app() -> ! {
     unsafe extern "C" {
         unsafe fn __restore(cx_addr: usize);
     }
+    // 启动执行
     unsafe {
         __restore(KERNEL_STACK.push_context(TrapContext::app_init_context(
             APP_BASE_ADDRESS,

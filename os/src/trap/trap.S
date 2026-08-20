@@ -9,6 +9,8 @@
     .globl __alltraps
     .globl __restore
     .align 2
+# 保存现场, 处理中断
+# 当发生ecall(系统调用),中断或异常时,CPU 硬件会自动读取 stvec 寄存器的值，然后跳转过来执行
 __alltraps:
     csrrw sp, sscratch, sp
     # now sp->kernel stack, sscratch->user stack
@@ -40,12 +42,12 @@ __alltraps:
 __restore:
     # case1: start running app by __restore
     # case2: back to U after handling trap
-    mv sp, a0
+    mv sp, a0  # 把参数(TrapContext)设置为栈指针
     # now sp->kernel stack(after allocated), sscratch->user stack
     # restore sstatus/sepc
-    ld t0, 32*8(sp)
-    ld t1, 33*8(sp)
-    ld t2, 2*8(sp)
+    ld t0, 32*8(sp)  # sstatus
+    ld t1, 33*8(sp)  # sepc : APP_BASE_ADDRESS
+    ld t2, 2*8(sp)   # 读取用户栈指针
     csrw sstatus, t0
     csrw sepc, t1
     csrw sscratch, t2
@@ -60,5 +62,5 @@ __restore:
     # release TrapContext on kernel stack
     addi sp, sp, 34*8
     # now sp->kernel stack, sscratch->user stack
-    csrrw sp, sscratch, sp
-    sret
+    csrrw sp, sscratch, sp # 交换sp和sscratch, sp指向用户栈(sscratch专门用于存放用户栈指针)
+    sret # 跳转到spec(pc=spec)，根据sstatus切换特权级

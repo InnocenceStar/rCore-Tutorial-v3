@@ -28,6 +28,8 @@ pub fn init() {
         safe fn __alltraps();
     }
     unsafe {
+        // 将__alltraps的内存地址写入CSR stvec寄存器中
+        // 告诉 CPU：“以后如果发生了中断或异常（比如系统调用），请跳转到这个地址去执行。”
         stvec::write(stvec::Stvec::new(
             linker_symbol_addr!(__alltraps),
             TrapMode::Direct,
@@ -37,6 +39,7 @@ pub fn init() {
 
 #[unsafe(no_mangle)]
 /// handle an interrupt, exception, or system call from user space
+/// called by __all_traps
 pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     let scause = scause::read(); // get trap cause
     let stval = stval::read(); // get extra value
