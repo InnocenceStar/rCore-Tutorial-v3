@@ -7,6 +7,7 @@ pub fn console_putchar(c: usize) {
 }
 
 /// use sbi call to set timer
+/// 设置mtimecmp CSR, 一旦计数器mtime超过mtimecmp，则会触发时钟中断
 pub fn set_timer(timer: usize) {
     sbi_rt::set_timer(timer as _);
 }

@@ -8,6 +8,7 @@ const TICKS_PER_SEC: usize = 100;
 const MSEC_PER_SEC: usize = 1000;
 
 /// read the `mtime` register
+/// 通过rdtime伪汇编指令获取
 pub fn get_time() -> usize {
     time::read()
 }
@@ -18,6 +19,7 @@ pub fn get_time_ms() -> usize {
 }
 
 /// set the next timer interrupt
+/// 10ms 之后一个 S 特权级时钟中断就会被触发
 pub fn set_next_trigger() {
     set_timer(get_time() + clock_freq() / TICKS_PER_SEC);
 }
