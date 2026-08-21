@@ -69,8 +69,13 @@ pub fn load_apps() {
     }
     let num_app_ptr = linker_symbol_addr!(_num_app) as *const usize;
     let num_app = get_num_app();
+    // .quad _num_app
+    // .quad app1_start_addr
+    // .quad app2_start_addr
+    // ...
     let app_start = unsafe { core::slice::from_raw_parts(num_app_ptr.add(1), num_app + 1) };
     // load apps
+    // 将存储的代码复制到运行的地方
     for i in 0..num_app {
         let base_i = get_base_i(i);
         // clear region
