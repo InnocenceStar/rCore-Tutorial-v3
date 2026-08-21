@@ -22,6 +22,8 @@ use riscv::register::{mtvec::TrapMode, scause, stval, stvec};
 global_asm!(include_str!("trap.S"));
 
 /// initialize CSR `stvec` as the entry of `__alltraps`
+/// Supervisor Trap Vector Base Address Register
+/// 发生中断时跳转到那里去
 pub fn init() {
     unsafe extern "C" {
         safe fn __alltraps();
