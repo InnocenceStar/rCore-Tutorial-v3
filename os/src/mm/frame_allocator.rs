@@ -30,6 +30,8 @@ impl Debug for FrameTracker {
     }
 }
 
+/// 当FrameTracker生命周期结束被编译器回收时，drop方法会自动被编译器调用;
+/// 控制物理页帧回收；
 impl Drop for FrameTracker {
     fn drop(&mut self) {
         frame_dealloc(self.ppn);

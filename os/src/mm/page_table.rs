@@ -22,6 +22,7 @@ bitflags! {
 #[derive(Copy, Clone)]
 #[repr(C)]
 /// page table entry structure
+/// PNN + 权限位 + 有效位
 pub struct PageTableEntry {
     pub bits: usize,
 }
@@ -58,6 +59,7 @@ impl PageTableEntry {
 /// page table structure
 pub struct PageTable {
     root_ppn: PhysPageNum,
+    // 记录物理页帧，防止被回收
     frames: Vec<FrameTracker>,
 }
 
@@ -77,16 +79,21 @@ impl PageTable {
             frames: Vec::new(),
         }
     }
+    /// 查找页表项，没有则创建；
+    /// ## note
+    /// - 返回的页表项可能不是合法的；
     fn find_pte_create(&mut self, vpn: VirtPageNum) -> Option<&mut PageTableEntry> {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut result: Option<&mut PageTableEntry> = None;
         for (i, idx) in idxs.iter().enumerate() {
             let pte = &mut ppn.get_pte_array()[*idx];
+            // 到了第三级
             if i == 2 {
                 result = Some(pte);
                 break;
             }
+            // 当前PTE无效，说明还未创建下一级页表
             if !pte.is_valid() {
                 let frame = frame_alloc().unwrap();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);

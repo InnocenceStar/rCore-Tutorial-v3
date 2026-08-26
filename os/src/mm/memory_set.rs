@@ -378,6 +378,11 @@ impl MapArea {
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 /// map type for memory set: identical or framed
+/// ## Identical
+/// - 恒等映射；
+/// - 虚拟地址=物理地址；
+/// ## Framed
+/// - 通过键值对存储地址映射；
 pub enum MapType {
     Identical,
     Framed,

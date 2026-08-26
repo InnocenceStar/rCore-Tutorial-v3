@@ -158,10 +158,15 @@ impl From<PhysPageNum> for PhysAddr {
 }
 
 impl VirtPageNum {
+    /// 返回页索引
+    /// ## return
+    /// - [f, s, t]
+    /// 三级页表，页号部分一共27bit；每一级9bit；
     pub fn indexes(&self) -> [usize; 3] {
         let mut vpn = self.0;
         let mut idx = [0usize; 3];
         for i in (0..3).rev() {
+            // 511 -> 0x111111111
             idx[i] = vpn & 511;
             vpn >>= 9;
         }
