@@ -5,11 +5,13 @@
 .macro LOAD_GP n
     ld x\n, \n*8(sp)
 .endm
+    # 保存用户态寄存器到TrapContext, 切换到内核栈，跳转trap_handler
     .section .text.trampoline
     .globl __alltraps
     .globl __restore
     .align 2
 __alltraps:
+    # 切换栈:user->kernel; 切换前，sp指向用户栈，sscratch指向内核栈顶
     csrrw sp, sscratch, sp
     # now sp->*TrapContext in user space, sscratch->user stack
     # save other general purpose registers

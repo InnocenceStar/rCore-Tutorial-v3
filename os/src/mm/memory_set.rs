@@ -68,6 +68,10 @@ impl MemorySet {
         self.areas.push(map_area);
     }
     /// Mention that trampoline is not collected by areas.
+    /// ## note
+    /// - 映射trampoline的物理内存到虚拟内存上
+    /// - 映射到虚拟内存用户空间的最高页
+    /// - 赋予其读与执行的权限
     fn map_trampoline(&mut self) {
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
@@ -102,6 +106,7 @@ impl MemorySet {
             linker_symbol_addr!(ebss)
         );
         println!("mapping .text section");
+        // 恒等映射
         memory_set.push(
             MapArea::new(
                 (linker_symbol_addr!(stext)).into(),
@@ -243,6 +248,7 @@ impl MemorySet {
             elf.header.pt2.entry_point() as usize,
         )
     }
+    /// 开启分页
     pub fn activate(&self) {
         let satp = self.page_table.token();
         unsafe {

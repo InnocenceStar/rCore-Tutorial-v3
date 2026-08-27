@@ -26,10 +26,13 @@ use riscv::register::{mtvec::TrapMode, scause, sie, stval, stvec};
 global_asm!(include_str!("trap.S"));
 
 /// initialize CSR `stvec` as the entry of `__alltraps`
+/// ## stvec
+/// - supervisor trap vector base addr register
 pub fn init() {
     set_kernel_trap_entry();
 }
 
+/// 设置内核下的trap入口：panic
 fn set_kernel_trap_entry() {
     unsafe {
         stvec::write(stvec::Stvec::new(
@@ -39,6 +42,7 @@ fn set_kernel_trap_entry() {
     }
 }
 
+/// 设置用户下的trap入口： 跳板代码
 fn set_user_trap_entry() {
     unsafe {
         stvec::write(stvec::Stvec::new(TRAMPOLINE, TrapMode::Direct));

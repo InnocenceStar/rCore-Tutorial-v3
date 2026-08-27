@@ -135,7 +135,14 @@ impl PageTable {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| *pte)
     }
+
+    /// 开启分页，返回satp应该设置的值；
     pub fn token(&self) -> usize {
+        // satp 寄存器的最高几位（63:60）被定义为 MODE 字段，用于告诉硬件 MMU（内存管理单元）当前应该使用哪种分页模式
+        // 0 (0b0000)：Bare 模式。关闭地址转换，虚拟地址直接等于物理地址。
+        // 8 (0b1000)：Sv39 模式。这是 64 位 RISC-V 系统中最常用的模式。它使用三级页表，支持 39 位虚拟地址（512GB 空间）和 56 位物理地址。
+        // 9 (0b1001)：Sv48 模式。使用四级页表，支持 48 位虚拟地址。
+        // 10 (0b1010)：Sv57 模式。使用五级页表，支持 57 位虚拟地址。
         8usize << 60 | self.root_ppn.0
     }
 }

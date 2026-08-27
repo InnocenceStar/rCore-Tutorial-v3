@@ -14,6 +14,7 @@ pub struct FrameTracker {
 }
 
 impl FrameTracker {
+    /// 初始化新的物理页
     pub fn new(ppn: PhysPageNum) -> Self {
         // page cleaning
         let bytes_array = ppn.get_bytes_array();
@@ -45,6 +46,9 @@ trait FrameAllocator {
 }
 
 /// an implementation for frame allocator
+/// ## note
+/// - current -> end 是未使用的
+/// - recycled 是被回收的
 pub struct StackFrameAllocator {
     current: usize,
     end: usize,
@@ -65,6 +69,9 @@ impl FrameAllocator for StackFrameAllocator {
             recycled: Vec::new(),
         }
     }
+    /// 申请物理页
+    /// ## 逻辑
+    /// - 先从回收的物理页帧中返回；若没有，则重新分配一个未使用的页号;
     fn alloc(&mut self) -> Option<PhysPageNum> {
         if let Some(ppn) = self.recycled.pop() {
             Some(ppn.into())
@@ -99,6 +106,7 @@ pub fn init_frame_allocator() {
     unsafe extern "C" {
         safe fn ekernel();
     }
+    // 将内核栈开始的到内存结束的地方作为帧分配器管理的物理内存区域；
     FRAME_ALLOCATOR.exclusive_access().init(
         PhysAddr::from(linker_symbol_addr!(ekernel)).ceil(),
         PhysAddr::from(MEMORY_END).floor(),
