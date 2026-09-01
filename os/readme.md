@@ -1,3 +1,38 @@
+## trap
+
+trap本质上是一种分发机制. trap 是总入口，scause 是分拣员。 CPU 不管你是主动敲门还是被动被踢进来的，统一先 trap 到内核，然后读 scause 判断"你是谁"，再分发到对应的处理函数。
+
+在 RISC-V 中，不管是系统调用、外部中断还是异常，CPU 都会"陷入"（trap）到同一个地方处理。
+
+| 类型     | 触发方式                       | scause 值（示例）                                |
+| -------- | ------------------------------ | ------------------------------------------------ |
+| 系统调用 | 用户执行 `ecall`               | 8（Environment Call from U-mode）                |
+| 外部中断 | 硬件设备发信号（时钟、键盘等） | 最高位为 1，如 5（Supervisor Timer Interrupt）   |
+| 异常     | CPU 执行中出错（缺页、除零等） | 如 13（Load Page Fault）、15（Store Page Fault） |
+
+流程:
+
+```
+ecall / 硬件中断 / 异常
+        │
+        ▼
+  CPU 自动跳转到 stvec 指向的地址
+        │
+        ▼
+  trap_handler()          ← 统一入口
+        │
+        ▼
+  读 scause 寄存器
+        │
+        ├── scause == 8        → sys_call()    系统调用
+        ├── scause 最高位 == 1  → irq_handler() 外部中断
+        └── 其他               → exception()   异常处理
+```
+
+> 在 RISC-V 架构中，跳转到“跳板代码”（即 Trap Handler 入口）的过程完全由硬件自动完成，其核心机制依赖于一个关键的控制状态寄存器——stvec（Supervisor Trap Vector Base Address Register）。
+> 这个寄存器存储了内核预先设置好的 trap 处理程序的起始地址。
+> 当任何 trap 事件（系统调用、中断、异常）发生时，CPU 会自动将程序计数器（PC）设置为 stvec 的值，从而无条件跳转到该地址执行代码。
+
 ## pte & pt
 
 ```

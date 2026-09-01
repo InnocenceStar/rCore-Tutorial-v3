@@ -72,6 +72,11 @@ impl MemorySet {
     /// - 映射trampoline的物理内存到虚拟内存上
     /// - 映射到虚拟内存用户空间的最高页
     /// - 赋予其读与执行的权限
+    /// ## 为什么映射
+    /// - 因为trampoline放在用户空间中;不是恒等映射;
+    /// ## 会来带什么问题
+    /// - alltraps 和 restore的地址需要基于这个trampoline来重新计算,不能直接使用;
+    /// - 比如在trap_return中计算__restore的地址;
     fn map_trampoline(&mut self) {
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
