@@ -30,5 +30,7 @@ __switch:
     .endr
     # restore kernel stack of next task
     ld sp, 8(a1)
+    #  # 等价于 jalr x0, 0(ra) —— 跳转到 ra 指向的地址
+    # 记录为什么叫ra: __switch 本质上就是借用了函数调用的机制, https://qianwen.my.cn/share/chat/0c4c77f421b845bd9ffbc71d07ed3c03
     ret
 
