@@ -25,6 +25,9 @@ pub fn sys_getpid() -> isize {
     current_task().unwrap().pid.0 as isize
 }
 
+/// 当前进程 fork 出来一个子进程。
+/// ## return 
+/// 对于子进程返回 0，对于当前进程则返回子进程的 PID 。
 pub fn sys_fork() -> isize {
     let current_task = current_task().unwrap();
     let new_task = current_task.fork();
@@ -39,6 +42,7 @@ pub fn sys_fork() -> isize {
     new_pid as isize
 }
 
+/// 将当前进程的地址空间清空并加载一个特定的可执行文件，返回用户态后开始它的执行。
 pub fn sys_exec(path: *const u8) -> isize {
     let token = current_user_token();
     let path = translated_str(token, path);
@@ -51,6 +55,9 @@ pub fn sys_exec(path: *const u8) -> isize {
     }
 }
 
+/// 当前进程等待一个子进程变为僵尸进程，回收其全部资源并收集其返回值。
+/// ## param
+/// - pid 表示要等待的子进程的进程 ID，如果为 -1 的话表示等待任意一个子进程；
 /// If there is not a child process whose pid is same as given, return -1.
 /// Else if there is a child process but it is still running, return -2.
 pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {

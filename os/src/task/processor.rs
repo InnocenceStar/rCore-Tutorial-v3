@@ -82,6 +82,13 @@ pub fn current_trap_cx() -> &'static mut TrapContext {
         .inner_exclusive_access()
         .get_trap_cx()
 }
+/// 切换到 idle 控制流并开启新一轮的任务调度
+/// ## note
+/// - 这里没有直接切换到新的任务而是切换到idle控制流；
+/// - 实现切换与调度的分离；
+/// - 这样做的主要目的是使得换入/换出进程和调度执行流在内核层各自执行在不同的内核栈上，分别是进程自身的内核栈和内核初始化时使用的启动栈；
+/// - 这样的话，调度相关的数据不会出现在进程内核栈上，也使得调度机制对于换出进程的Trap执行流是不可见的，它在决定换出的时候只需调用schedule而无需操心调度的事情。从而各执行流的分工更加明确了，虽然带来了更大的开销。
+/// - 实际上当然可以在Trap处理中直接进行调度找到切换到哪个进程并切换过去。有兴趣的话可以试试。
 ///Return to idle control flow for new scheduling
 pub fn schedule(switched_task_cx_ptr: *mut TaskContext) {
     let mut processor = PROCESSOR.exclusive_access();
