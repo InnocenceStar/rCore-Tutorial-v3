@@ -7,6 +7,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard};
 /// Virtual filesystem layer over easy-fs
+/// block_id 和 block_offset 记录该 Inode 对应的 DiskInode 保存在磁盘上的具体位置
 pub struct Inode {
     block_id: usize,
     block_offset: usize,
@@ -171,6 +172,7 @@ impl Inode {
         size
     }
     /// Clear the data in current inode
+    /// 将该文件占据的索引块和数据块回收
     pub fn clear(&self) {
         let mut fs = self.fs.lock();
         self.modify_disk_inode(|disk_inode| {

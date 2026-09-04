@@ -26,6 +26,8 @@ impl Bitmap {
         }
     }
     /// Allocate a new block from a block device
+    /// 遍历区域中的每个块，再在每个块中以bit组（每组 64 bits）为单位进行遍历，找到一个尚未被全部分配出去的组，最后在里面分配一个bit
+    /// 它将会返回分配的bit所在的位置，等同于索引节点/数据块的编号。如果所有bit均已经被分配出去了，则返回 None 。
     pub fn alloc(&self, block_device: &Arc<dyn BlockDevice>) -> Option<usize> {
         for block_id in 0..self.blocks {
             let pos = get_block_cache(

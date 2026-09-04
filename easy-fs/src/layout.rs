@@ -79,6 +79,9 @@ type IndirectBlock = [u32; BLOCK_SZ / 4];
 /// A data block
 type DataBlock = [u8; BLOCK_SZ];
 /// A disk inode
+/// ## desc
+/// - 每个文件/目录在磁盘上均以一个 DiskInode 的形式存储；
+/// - 磁盘上的索引节点区域，每个块上都保存着若干个索引节点 DiskInode ；
 #[repr(C)]
 pub struct DiskInode {
     pub size: u32,
@@ -108,6 +111,7 @@ impl DiskInode {
         self.type_ == DiskInodeType::File
     }
     /// Return block number correspond to size.
+    /// 计算为了容纳自身 size 字节的内容需要多少个数据块
     pub fn data_blocks(&self) -> u32 {
         Self::_data_blocks(self.size)
     }
@@ -115,6 +119,7 @@ impl DiskInode {
         (size + BLOCK_SZ as u32 - 1) / BLOCK_SZ as u32
     }
     /// Return number of blocks needed include indirect1/2.
+    /// total_blocks 不仅包含数据块，还需要统计索引块
     pub fn total_blocks(size: u32) -> u32 {
         let data_blocks = Self::_data_blocks(size) as usize;
         let mut total = data_blocks as usize;
@@ -137,6 +142,11 @@ impl DiskInode {
         Self::total_blocks(new_size) - Self::total_blocks(self.size)
     }
     /// Get id of block given inner id
+    /// 它可以从索引中查到它自身用于保存文件内容的第 block_id 个数据块的块编号;
+    /// ## params
+    /// - inner_id: 逻辑块号；min: 0; max: 28 + 512/4 + 128 * 128
+    /// ## return
+    /// - 物理块号
     pub fn get_block_id(&self, inner_id: u32, block_device: &Arc<dyn BlockDevice>) -> u32 {
         let inner_id = inner_id as usize;
         if inner_id < INODE_DIRECT_COUNT {
