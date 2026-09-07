@@ -91,6 +91,8 @@ impl PipeRingBuffer {
             RING_BUFFER_SIZE - self.available_read()
         }
     }
+    /// 判断管道的所有写端是否都被关闭
+    /// 通过尝试将管道中保存的写端的弱引用计数升级为强引用计数来实现的;
     pub fn all_write_ends_closed(&self) -> bool {
         self.write_end.as_ref().unwrap().upgrade().is_none()
     }

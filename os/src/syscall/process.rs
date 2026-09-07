@@ -122,6 +122,7 @@ pub fn sys_kill(pid: usize, signum: i32) -> isize {
     }
 }
 
+/// 设置当前进程的全局信号掩码
 pub fn sys_sigprocmask(mask: u32) -> isize {
     if let Some(task) = current_task() {
         let mut inner = task.inner_exclusive_access();
@@ -137,6 +138,7 @@ pub fn sys_sigprocmask(mask: u32) -> isize {
     }
 }
 
+/// 进程通知内核信号处理例程退出，可以恢复原先的进程执行
 pub fn sys_sigreturn() -> isize {
     if let Some(task) = current_task() {
         let mut inner = task.inner_exclusive_access();
@@ -165,6 +167,8 @@ fn check_sigaction_error(signal: SignalFlags, action: usize, old_action: usize) 
     }
 }
 
+/// 为当前进程设置某种信号的处理函数，同时保存设置之前的处理函数;
+/// signum 表示信号的编号，action 表示要设置成的处理函数的指针
 pub fn sys_sigaction(
     signum: i32,
     action: *const SignalAction,
