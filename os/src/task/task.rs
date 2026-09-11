@@ -5,6 +5,7 @@ use crate::{mm::PhysPageNum, sync::UPSafeCell};
 use alloc::sync::{Arc, Weak};
 use core::cell::RefMut;
 
+/// 线程控制块
 pub struct TaskControlBlock {
     // immutable
     pub process: Weak<ProcessControlBlock>,
@@ -26,6 +27,7 @@ impl TaskControlBlock {
 }
 
 pub struct TaskControlBlockInner {
+    // 线程独占的线程资源组
     pub res: Option<TaskUserRes>,
     pub trap_cx_ppn: PhysPageNum,
     pub task_cx: TaskContext,
