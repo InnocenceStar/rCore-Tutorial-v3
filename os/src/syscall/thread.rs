@@ -19,6 +19,7 @@ pub fn sys_thread_create(entry: usize, arg: usize) -> isize {
         true,
     ));
     // add new task to scheduler
+    // TODO：将任务调度应该在所有资源都准备逻辑后，由于现在是单核，所以放在这里也行
     add_task(Arc::clone(&new_task));
     let new_task_inner = new_task.inner_exclusive_access();
     let new_task_res = new_task_inner.res.as_ref().unwrap();
